@@ -63,158 +63,298 @@ Verilog Code
 
 4:1 MUX Gate-Level Implementation
 
-module mux_4to1 (
-    input wire [1:0] sel,    // 2-bit selection input
-    input wire a, b, c, d,   // 4 input data lines
-    output wire out          // output
-);
+module mux_v( A, B, C, D, S0, S1, Y ); 
+input A;
+input B;
+input C;
+input D;
+input S0;
+input S1;
+output Y;
+wire not_S0, not_S1;
+wire A_and, B_and, C_and, D_and;
 
-    assign out = (sel == 2'b00) ? a :
-                 (sel == 2'b01) ? b :
-                 (sel == 2'b10) ? c :
-                                  d;
+
+not (not_S0, S0);
+not (not_S1, S1);
+
+
+and (A_and, A, not_S1, not_S0);
+and (B_and, B, not_S1, S0);
+and (C_and, C, S1, not_S0);
+and (D_and, D, S1, S0);
+
+
+or (Y, A_and, B_and, C_and, D_and);
 endmodule
- output:![image](https://github.com/user-attachments/assets/5c33d1cc-e1cc-434d-a8c4-57bd69f69591)
+
+Testbench Code:
+
+module multi_tb;
+    reg A, B, C, D;
+    reg S0, S1;
+    wire Y;
+
+    // Instantiate the multiplexer
+    mux_v u_mux_v(
+        .A(A), 
+        .B(B), 
+        .C(C), 
+        .D(D), 
+        .S0(S0), 
+        .S1(S1), 
+        .Y(Y)
+    );
+
+    initial begin
+        // Test case 1: Select A
+        A = 1; B = 0; C = 0; D = 0; S0 = 0; S1 = 0;
+        #10;
+
+        // Test case 2: Select B
+        A = 0; B = 1; C = 0; D = 0; S0 = 1; S1 = 0;
+        #10;
+        
+        // Test case 3: Select C
+        A = 0; B = 0; C = 1; D = 0; S0 = 0; S1 = 1;
+        #10;
+
+        // Test case 4: Select D
+        A = 0; B = 0; C = 0; D = 1; S0 = 1; S1 = 1;
+        #10;
+
+        
+
+        $finish;
+    end
+
+    // Monitor outputs
+    initial begin
+        $monitor("Time = %0t, A = %0d, B = %0d, C = %0d, D = %0d, S0 = %0d, S1 = %0d, Y = %0d",
+                 $time, A, B, C, D, S0, S1, Y);
+    end
+
+endmodule
+
+ output:![Screenshot (15)](https://github.com/user-attachments/assets/fc6e4ec4-134c-472d-a5ae-d72549ed79c9)
+
 
 
 4:1 MUX Data Flow Implementation
 
-// mux4_to_1_dataflow.v
-module mux4_to_1_dataflow (
-    input wire A,
-    input wire B,
-    input wire C,
-    input wire D,
-    input wire S0,
-    input wire S1,    
-    output wire Y
-);
-    assign Y = (~S1 & ~S0 & A|
-               (~S1 & S0 & B) |
-               (S1 & ~S0 & C) |
-               (S1 & S0 & D);
+module mux_v(a,b,c,d,s,y);
+input a;
+input b;
+input c;
+input d;
+input[1:0]s;
+output y;
+
+
+
+assign y = (s==2'b00)? a:
+            (s==2'b01)? b :
+            (s==2'b10)? c : d;
+
 endmodule
 
-OUTPUT:![Screenshot 2024-09-19 142717](https://github.com/user-attachments/assets/dd5789e4-feee-4029-aa34-50f9f0a9aae7)
+Testbench Code:
+
+module multi_tb;
+    reg a, b, c, d;
+    reg [1:0] s;
+    wire y;
+
+    // Instantiate the multiplexer
+    mux_v u_mux_v(
+        .a(a), 
+        .b(b), 
+        .c(c), 
+        .d(d), 
+        .s(s), 
+        .y(y)
+    );
+
+    initial begin
+        // Test case 1: Select a
+        a = 1; b = 0; c = 0; d = 0; s = 2'b00;
+        #10;
+
+        // Test case 2: Select b
+        a = 0; b = 1; c = 0; d = 0; s = 2'b01;
+        #10;
+
+        // Test case 3: Select c
+        a = 0; b = 0; c = 1; d = 0; s = 2'b10;
+        #10;
+
+        // Test case 4: Select d
+        a = 0; b = 0; c = 0; d = 1; s = 2'b11;
+        #10;
+
+                $finish;
+    end
+
+    // Monitor outputs
+    initial begin
+        $monitor("Time = %0t, a = %0d, b = %0d, c = %0d, d = %0d, s = %0b, y = %0d",
+                 $time, a, b, c, d, s, y);
+    end
+
+endmodule
+
+OUTPUT:![Screenshot (16)](https://github.com/user-attachments/assets/c9e37dc7-4435-466b-ab7e-1728245fa1f8)
+
 
 
 4:1 MUX Behavioral Implementation
 
-module mux4_1_behavioral (
-    input wire a, b, c, d,
-    input wire sel0, sel1,
-    output wire y
-);
+module mux_v(a,b,c,d,s,y);
+input a;
+input b;
+input c;
+input d;
+input[1:0]s;
+output reg y;
 
-    // Behavioral implementation using conditional statements
-    always @(*) begin
-        if (sel1 == 0 && sel0 == 0) y = a;
-        else if (sel1 == 0 && sel0 == 1) y = b;
-        else if (sel1 == 1 && sel0 == 0) y = c;
-        else y = d;
+always@(*)begin
+
+y <= (s==2'b00)? a:
+     (s==2'b01)? b :
+     (s==2'b10)? c : d;
+end
+endmodule
+
+Testbench Code:
+
+module multi_tb;
+    reg a, b, c, d;
+    reg [1:0] s;
+    wire y;
+
+    // Instantiate the multiplexer
+    mux_v u_mux_v(
+        .a(a), 
+        .b(b), 
+        .c(c), 
+        .d(d), 
+        .s(s), 
+        .y(y)
+    );
+
+    initial begin
+        // Test case 1: Select input a
+        a = 1; b = 0; c = 0; d = 0; s = 2'b00;
+        #10;
+
+        // Test case 2: Select input b
+        a = 0; b = 1; c = 0; d = 0; s = 2'b01;
+        #10;
+
+        // Test case 3: Select input c
+        a = 0; b = 0; c = 1; d = 0; s = 2'b10;
+        #10;
+        
+        // Test case 4: Select input d
+        a = 0; b = 0; c = 0; d = 1; s = 2'b11;
+        #10;
+
+        $finish;
+    end
+
+    // Monitor outputs
+    initial begin
+        $monitor("Time = %0t, a = %0d, b = %0d, c = %0d, d = %0d, s = %0b, y = %0d",
+                 $time, a, b, c, d, s, y);
     end
 
 endmodule
 
 output:
-![Screenshot 2024-09-19 142717](https://github.com/user-attachments/assets/dd5789e4-feee-4029-aa34-50f9f0a9aae7)
+![Screenshot (14)](https://github.com/user-attachments/assets/23bbfe8d-377e-4b68-a0bb-e511eb9b85fb)
+
 
 4:1 MUX Structural Implementation
 
-module mux2_to_1 (a,s,out);
-input s,[1:0]a;
-output out;
-    assign out = s ? a[1] : a[0];
+module mux_v(
+    a, b, c, d,  // Inputs
+    s0, s1,      // Select lines
+    y           // Output
+);
+
+    input a, b, c, d;
+    input s0, s1;
+    output y;
+
+    wire not_s0, not_s1;
+    wire a_and, b_and, c_and, d_and;
+
+    // Invert select lines
+    not u_not_s0(not_s0, s0);
+    not u_not_s1(not_s1, s1);
+
+    // AND gates for each input
+    and u_a_and(a_and, a, not_s1, not_s0);
+    and u_b_and(b_and, b, not_s1, s0);
+    and u_c_and(c_and, c, s1, not_s0);
+    and u_d_and(d_and, d, s1, s0);
+
+    // OR gate to combine AND outputs
+    or u_or(y, a_and, b_and, c_and, d_and);
+
 endmodule
-module mux4_to_1_structural (a,s,out);
-input [3:0]a;
-input [1:0]s;
-output out;
-    wire mux_low, mux_high;
-    mux2_to_1 mux0 (.a[0](a[0]), .a[1](a[1]), .s(s[0]), .out(mux_low));
-    mux2_to_1 mux1 (.a[0](a[2]), .a[1](a[3]), .s(s[0]), .out(mux_high));
-    mux2_to_1 mux_final (.a[0](mux_low), .a[1](mux_high), .s(s[1]), .out(out));
-endmodule
 
-OUTPUT: ![image](https://github.com/user-attachments/assets/3dd64fd0-0e6e-41bc-be72-6e715faebb3b)
+Testbench Code:
 
+module multi_tb;
+    reg a, b, c, d;
+    reg s0, s1;
+    wire y;
 
-Testbench Implementation
+    // Instantiate the multiplexer
+    mux_v u_mux_v(
+        .a(a), 
+        .b(b), 
+        .c(c), 
+        .d(d), 
+        .s0(s0), 
+        .s1(s1), 
+        .y(y)
+    );
 
-`timescale 1ns / 1ps
-module mux4_to_1_tb;
-reg [3:0]a;
-reg [1:0]s;
-wire out;
-    wire out_gate;
-    wire out_dataflow;
-    wire out_behavioral;
-    wire out_structural;
-    mux4_to_1_gate uut_gate (
-        .a[0](a[0]),
-        .a[1](a[1]),
-        .a[2](a[2]),
-        .a[3](a[3]),
-        .s[0](s[0]),
-        .s[1](s[1]),
-        .out(out_gate)
-    );
-    mux4_to_1_dataflow uut_dataflow (
-        .a[0](a[0]),
-        .a[1](a[1]),
-        .a[2](a[2]),
-        .a[3](a[3]),
-        .s[0](s[0]),
-        .s[1](s[1]),
-        .out(out_dataflow)
-    );
-    mux_4_1_behavioral uut_behavioral (
-        .a[0](a[0]),
-        .a[1](a[1]),
-        .a[2](a[2]),
-        .a[3](a[3]),
-        .s[0](s[0]),
-        .s[1](s[1]),
-        .out(out_behavioral)
-    );
-    mux4_to_1_structural uut_structural (
-        .a[0](a[0]),
-        .a[1](a[1]),
-        .a[2](a[2]),
-        .a[3](a[3]),
-        .s[0](s[0]),
-        .s[1](s[1]),
-        .out(out_structural)
-    );
     initial begin
-            a[0] = 0; a[1] = 0; a[2] = 0; a[3] = 0; s[0] = 0; s[1] = 0;
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b00_0000; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b00_0001; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b01_0010; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b10_0100; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b11_1000; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b01_1100; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b10_1010; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b11_0110; 
-        #2 {s[1], s[0], a[0], a[1], a[2], a[3]} = 6'b00_1111; 
-        #2 $stop;
+        // Test case 1: Select a
+        a = 1; b = 0; c = 0; d = 0; s0 = 0; s1 = 0;
+        #10;
+
+        // Test case 2: Select b
+        a = 0; b = 1; c = 0; d = 0; s0 = 1; s1 = 0;
+        #10;
+
+        // Test case 3: Select c
+        a = 0; b = 0; c = 1; d = 0; s0 = 0; s1 = 1;
+        #10;
+
+        // Test case 4: Select d
+        a = 0; b = 0; c = 0; d = 1; s0 = 1; s1 = 1;
+        #10;
+        
+        $finish;
     end
+
+    // Monitor outputs
     initial begin
-        $monitor("Time=%0t | s[1]=%b s[0]=%b | Inputs: a[0]=%b a[1]=%b a[2]=%b a[3]=%b | out_gate=%b | out_dataflow=%b | out_behavioral=%b | out_structural=%b",$time, s[1], s[0], a[0], a[1], a[2], a[3], out_gate, out_dataflow, out_behavioral, out_structural);
+        $monitor("Time = %0t, a = %0d, b = %0d, c = %0d, d = %0d, s0 = %0d, s1 = %0d, y = %0d",
+                 $time, a, b, c, d, s0, s1, y);
     end
+
 endmodule
 
-OUTPUT: ![image](https://github.com/user-attachments/assets/f82773df-dc8c-4791-8432-7383c6f3480a)
+
+OUTPUT:
+![Screenshot (17)](https://github.com/user-attachments/assets/12a0f7fc-5a87-40bc-a917-15ffe0b0add2)
 
 
-Sample Output
-
-Time=0 | S1=0 S0=0 | Inputs: A=0 B=0 C=0 D=0 | Y_gate=0 | Y_dataflow=0 | Y_behavioral=0 | Y_structural=0
-Time=10 | S1=0 S0=0 | Inputs: A=0 B=0 C=0 D=0 | Y_gate=0 | Y_dataflow=0 | Y_behavioral=0 | Y_structural=0
-Time=20 | S1=0 S0=0 | Inputs: A=0 B=0 C=0 D=1 | Y_gate=0 | Y_dataflow=0 | Y_behavioral=0 | Y_structural=0
-Time=30 | S1=0 S0=1 | Inputs: A=0 B=0 C=0 D=1 | Y_gate=0 | Y_dataflow=0 | Y_behavioral=0 | Y_structural=0
-Time=40 | S1=1 S0=0 | Inputs: A=0 B=0 C=0 D=1 | Y_gate=0 | Y_dataflow=0 | Y_behavioral=0 | Y_structural=0
-...
 
 Conclusion:
 
