@@ -1,4 +1,4 @@
-# Multiplexer Simulation in Vivado
+# Exp No:1 Multiplexer Simulation in Vivado using verilog hdl
 
 ## Aim:
 To design and simulate a 4:1 Multiplexer (MUX) using Verilog HDL in four different modeling styles—Gate-Level, Data Flow, Behavioral, and Structural—and to verify its functionality through a testbench using the Vivado 2023.1 simulation environment. The experiment aims to understand how different abstraction levels in Verilog can be used to describe the same digital logic circuit and analyze their performance.
@@ -137,7 +137,7 @@ module multi_tb;
 
 endmodule
 
- ## output
+ ## Output
  ![Screenshot (15)](https://github.com/user-attachments/assets/fc6e4ec4-134c-472d-a5ae-d72549ed79c9)
 
 
@@ -205,7 +205,7 @@ module multi_tb;
 
 endmodule
 
-## OUTPUT
+## Output
 ![Screenshot (16)](https://github.com/user-attachments/assets/c9e37dc7-4435-466b-ab7e-1728245fa1f8)
 
 
@@ -354,7 +354,7 @@ module multi_tb;
 endmodule
 
 
-## OUTPUT
+## Output
 ![Screenshot (17)](https://github.com/user-attachments/assets/12a0f7fc-5a87-40bc-a917-15ffe0b0add2)
 
 
